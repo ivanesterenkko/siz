@@ -7,7 +7,7 @@ from app.config import settings
 from app.exceptions import (IncorrectTokenFormatException,
                             TokenAbsentException, TokenExpiredException,
                             UserIsNotPresentException)
-from app.customers.dao import CustomersDAO, SessionsDAO
+from app.suppliers.dao import Sessions_supDAO, SuppliersDAO
 
 
 def get_token(request: Request):
@@ -26,7 +26,7 @@ def get_token(request: Request):
     return token
 
 
-async def get_current_customer(token: str = Depends(get_token)):
+async def get_current_supplier(token: str = Depends(get_token)):
 
     try:
 
@@ -44,20 +44,20 @@ async def get_current_customer(token: str = Depends(get_token)):
 
         raise TokenExpiredException
 
-    customer_id = payload.get("sub")
+    supplier_id = payload.get("sub")
 
-    if not customer_id:
+    if not supplier_id:
 
         raise UserIsNotPresentException
 
-    customer = await CustomersDAO.find_by_id(customer_id)
+    supplier = await SuppliersDAO.find_by_id(supplier_id)
 
-    if not customer:
+    if not supplier:
         raise UserIsNotPresentException
 
-    session = await SessionsDAO.find_one_or_none(jwt_token=token)
+    session = await Sessions_supDAO.find_one_or_none(jwt_token=token)
 
     if not session:
         raise HTTPException(status_code=401, detail="Token mismatch")
 
-    return customer
+    return supplier

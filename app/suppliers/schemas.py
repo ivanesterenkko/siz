@@ -2,28 +2,13 @@ from datetime import datetime
 from pydantic import UUID4, BaseModel
 
 
-class CustomerRegister(BaseModel):
+class SupplierRegister(BaseModel):
     name: str
     INN: str
     login: str
     address: str
     phone: str
     password: str
-
-
-class UserResponse(BaseModel):
-    name: str
-    is_admin: bool
-
-
-class SUserAuth(BaseModel):
-
-    login: str
-    password: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
 
 
 class CompanyProjectResponse(BaseModel):

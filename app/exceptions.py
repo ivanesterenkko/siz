@@ -59,16 +59,16 @@ class ProjectStepLimit(AutoException):
     detail = "Превышен лимит шагов в проекте."
 
 
-class ProjectStepError(AutoException):
+class ProductOutOfStock(AutoException):
 
     status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Вы пытаетесь перейти на недопустимый шаг."
+    detail = "Товара недостаточно на складе."
 
 
-class RoofNotFound(AutoException):
+class ProductNotFound(AutoException):
 
     status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Кровельное покрытие не найдено."
+    detail = "Товар не найден."
 
 
 class ProjectAlreadyExists(AutoException):
