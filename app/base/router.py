@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
-from app.base.dao import CartsDAO, Order_productsDAO, OrdersDAO, ProductsDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (CartsResponse, Order_productsResponse, OrdersResponse, ProductRequest, ProductResponse,
+from app.base.dao import AttributesDAO, CartsDAO, CategoriesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
+from app.base.schemas import (AttributesRequest, AttributesResponse, CartsResponse, CategoryRequest, CategoryResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductRequest, ProductResponse,
                               TariffRequest, TariffResponse, Warehouse_productResponse, WarehouseRequest, WarehouseResponse)
 from app.customers.dependencies import get_current_customer
 from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
@@ -24,8 +24,34 @@ async def add_product(
         weight=product.weight,
         height=product.height,
         price=product.price,
-        supplier_id=supplier.id
+        supplier_id=supplier.id,
+        color=product.color,
+        country=product.country,
+        brand=product.brand,
+        gost=product.gost,
+        article=product.article,
+        lifespan=product.lifespan,
+        produce_time=product.produce_time,
+        is_by_order=product.is_by_order,
+        category_id=product.category_id
         )
+    product_attributes = []
+    if product.attributes:
+        for attribute in product.attributes:
+            attribute_or = await AttributesDAO.find_by_id(attribute.attribute_id)
+            product_attribute = await Product_attributesDAO.add(
+                attribute_id=attribute.attribute_id,
+                value=attribute.value,
+                product_id=result.id
+            )
+            product_attributes.append(
+                Product_attributeResponse(
+                    id=product_attribute.id,
+                    attribute_id=product_attribute.attribute_id,
+                    name=attribute_or.name,
+                    value=product_attribute.value
+                )
+            )
     return ProductResponse(id=result.id,
                            name=result.name,
                            description=result.description,
@@ -34,26 +60,62 @@ async def add_product(
                            weight=result.weight,
                            height=result.height,
                            price=result.price,
-                           supplier_id=result.supplier_id)
+                           supplier_id=result.supplier_id,
+                           color=result.color,
+                           country=result.country,
+                           brand=result.brand,
+                           gost=result.gost,
+                           article=result.article,
+                           lifespan=result.lifespan,
+                           produce_time=result.produce_time,
+                           is_by_order=result.is_by_order,
+                           category_id=result.category_id,
+                           attributes=product_attributes)
 
 
 @router.get("/products", description="Получение товаров продавца")
 async def get_products_supplier(
       supplier: Suppliers = Depends(get_current_supplier)
       ) -> list[ProductResponse]:
+    result_response = []
     results = await ProductsDAO.find_all(supplier_id=supplier.id)
     if not results:
         raise ProductNotFound
-    return [
-        ProductResponse(id=result.id,
-                        name=result.name,
-                        description=result.description,
-                        width=result.width,
-                        length=result.length,
-                        weight=result.weight,
-                        height=result.height,
-                        price=result.price,
-                        supplier_id=result.supplier_id) for result in results]
+    for result in results:
+        product_attributes = []
+        attributes = await Product_attributesDAO.find_all(product_id=result.id)
+        for attribute in attributes:
+            attribute_or = await AttributesDAO.find_by_id(attribute.attribute_id)
+            product_attributes.append(
+                Product_attributeResponse(
+                    id=attribute.id,
+                    attribute_id=attribute.attribute_id,
+                    name=attribute_or.name,
+                    value=attribute.value
+                )
+            )
+        result_response.append(
+            ProductResponse(id=result.id,
+                            name=result.name,
+                            description=result.description,
+                            width=result.width,
+                            length=result.length,
+                            weight=result.weight,
+                            height=result.height,
+                            price=result.price,
+                            supplier_id=result.supplier_id,
+                            color=result.color,
+                            country=result.country,
+                            brand=result.brand,
+                            gost=result.gost,
+                            article=result.article,
+                            lifespan=result.lifespan,
+                            produce_time=result.produce_time,
+                            is_by_order=result.is_by_order,
+                            category_id=result.category_id,
+                            attributes=product_attributes)
+        )
+    return result_response
 
 
 @router.delete("/products/{product_id}", description="Удаление товара")
@@ -157,6 +219,104 @@ async def delete_warehouse_product(
       warehouse_product_id: UUID4,
       supplier: Suppliers = Depends(get_current_supplier)) -> None:
     await Warehouse_productsDAO.delete_(model_id=warehouse_product_id)
+
+
+@router.post("/add_category", description="Добавление категории")
+async def add_category(
+      category: CategoryRequest,
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> CategoryResponse:
+    result = await CategoriesDAO.add(
+        name=category.name,
+        class_name=category.class_name,
+        product_type=category.product_type
+        )
+    return CategoryResponse(id=result.id,
+                            name=result.name,
+                            class_name=result.class_name,
+                            product_type=result.product_type)
+
+
+@router.get("/categories")
+async def get_categories(
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> list[CategoryResponse]:
+    results = await CategoriesDAO.find_all()
+    response_data = [CategoryResponse(id=result.id,
+                                      name=result.name,
+                                      class_name=result.class_name,
+                                      product_type=result.product_type) for result in results]
+    return response_data
+
+
+@router.get("/categories/{category_id}")
+async def get_category(
+      category_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> CategoryResponse:
+    result = await CategoriesDAO.find_by_id(category_id)
+    return CategoryResponse(id=result.id,
+                            name=result.name,
+                            class_name=result.class_name,
+                            product_type=result.product_type)
+
+
+@router.delete("/categories/{category_id}")
+async def delete_category(
+      category_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+    await CategoriesDAO.delete_(model_id=category_id)
+
+
+@router.post("/categories/{category_id}/add_attribute", description="Добавление хакактеристики")
+async def add_attribute(
+      attribute: AttributesRequest,
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> AttributesResponse:
+    result = await AttributesDAO.add(
+        name=attribute.name,
+        value_name=attribute.value_name,
+        value_type=attribute.value_type,
+        category_id=attribute.category_id
+        )
+    return AttributesResponse(id=result.id,
+                              name=result.name,
+                              value_name=result.value_name,
+                              value_type=result.value_type)
+
+
+@router.get("/categories/{category_id}/attributes")
+async def get_attributes_for_category(
+      category_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> list[AttributesResponse]:
+    results = await AttributesDAO.find_all(category_id=category_id)
+    response_data = [AttributesResponse(id=result.id,
+                                        name=result.name,
+                                        value_name=result.value_name,
+                                        value_type=result.value_type) for result in results]
+    return response_data
+
+
+@router.get("/categories/{category_id}/attributes/{attribute_id}")
+async def get_attribute(
+      attribute_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)
+      ) -> AttributesResponse:
+    result = await AttributesDAO.find_by_id(attribute_id)
+    return AttributesResponse(id=result.id,
+                              name=result.name,
+                              value_name=result.value_name,
+                              value_type=result.value_type)
+
+
+@router.delete("/categories/{category_id}/attributes/{attribute_id}")
+async def delete_attribute(
+      attribute_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+    await AttributesDAO.delete_(model_id=attribute_id)
+
+
 
 @router.post("/add_product_to_cart")
 async def add_product_to_cart(
