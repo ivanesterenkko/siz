@@ -12,8 +12,8 @@ class Customers(Base):
     __tablename__ = 'customer'
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
-    name: Mapped[str] = mapped_column(nullable=False)
-    login: Mapped[str] = mapped_column(nullable=False)
+    fio: Mapped[str] = mapped_column(nullable=False)
+    email: Mapped[str] = mapped_column(nullable=False)
     hashed_password: Mapped[str] = mapped_column(nullable=False)
     phone: Mapped[str] = mapped_column(nullable=False)
     INN: Mapped[str] = mapped_column(nullable=False)
@@ -22,6 +22,7 @@ class Customers(Base):
     session = relationship("Sessions", back_populates="customer", cascade="all, delete-orphan")
     carts = relationship("Carts", back_populates="customer", cascade="all, delete-orphan")
     orders = relationship("Orders", back_populates="customer", cascade="all, delete-orphan")
+    roles = relationship("Roles", back_populates="customer", cascade="all, delete-orphan")
 
     def __str__(self):
 

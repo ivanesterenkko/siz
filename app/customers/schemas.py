@@ -3,12 +3,12 @@ from pydantic import UUID4, BaseModel
 
 
 class CustomerRegister(BaseModel):
-    name: str
-    INN: str
-    login: str
-    address: str
-    phone: str
+    fio: str
+    email: str
     password: str
+    phone: str
+    INN: str
+    address: str
 
 
 class UserResponse(BaseModel):
@@ -18,7 +18,7 @@ class UserResponse(BaseModel):
 
 class SUserAuth(BaseModel):
 
-    login: str
+    email: str
     password: str
 
 

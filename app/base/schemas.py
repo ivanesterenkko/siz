@@ -2,6 +2,30 @@ from datetime import datetime
 from pydantic import UUID4, BaseModel
 
 
+class RolesRequest(BaseModel):
+    name: str
+    description: str
+
+
+class RolesResponse(BaseModel):
+    id: UUID4
+    name: str
+    description: str
+
+
+class Role_classesRequest(BaseModel):
+    class_id: UUID4
+    name: str
+    lifespan: int
+
+
+class Role_classesResponse(BaseModel):
+    id: UUID4
+    class_id: UUID4
+    name: str
+    lifespan: int
+
+
 class Product_attributeRequest(BaseModel):
     attribute_id: UUID4
     value: str
@@ -34,10 +58,17 @@ class ProductRequest(BaseModel):
     attributes: list[Product_attributeRequest]
 
 
+class CategoryResponse(BaseModel):
+    id: UUID4
+    name: str
+    class_name: str
+    class_type: str
+
+
 class ProductResponse(BaseModel):
     id: UUID4
     supplier_id: UUID4
-    category_id: UUID4
+    classes: CategoryResponse
     name: str
     description: str
     weight: float
@@ -58,12 +89,16 @@ class ProductResponse(BaseModel):
 
 class WarehouseRequest(BaseModel):
     name: str
+    phone: str
+    representativeName: str
     address: str
 
 
 class WarehouseResponse(BaseModel):
     id: UUID4
     name: str
+    phone: str
+    representativeName: str
     address: str
 
 
@@ -78,18 +113,10 @@ class Warehouse_productResponse(BaseModel):
 class CategoryRequest(BaseModel):
     name: str
     class_name: str
-    product_type: str
-
-
-class CategoryResponse(BaseModel):
-    id: UUID4
-    name: str
-    class_name: str
-    product_type: str
+    class_type: str
 
 
 class AttributesRequest(BaseModel):
-    category_id: UUID4
     name: str
     value_name: str
     value_type: str

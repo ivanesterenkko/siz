@@ -12,7 +12,7 @@ from app.customers.models import Customers
 from app.customers.schemas import CustomerRegister, SUserAuth, TokenResponse
 
 
-router = APIRouter(prefix="/customer", tags=["Auth & Customers"])
+router = APIRouter(prefix="/auth", tags=["Auth & Customers"])
 
 
 @router.post("/register")
@@ -24,8 +24,8 @@ async def register(user_data: CustomerRegister) -> None:
     hashed_password = get_password_hash_customer(user_data.password)
 
     await CustomersDAO.add(
-        name=user_data.name,
-        login=user_data.login,
+        fio=user_data.fio,
+        email=user_data.email,
         hashed_password=hashed_password,
         address=user_data.address,
         phone=user_data.phone,
@@ -41,7 +41,7 @@ async def login_user(
       ) -> TokenResponse:
 
     customer = await authenticate_customer(
-        login=user_data.login,
+        email=user_data.email,
         password=user_data.password
         )
 

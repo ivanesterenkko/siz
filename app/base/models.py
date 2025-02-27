@@ -11,9 +11,12 @@ class Warehouses(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
+    phone: Mapped[str] = mapped_column(String, nullable=False)
+    representative_name: Mapped[str] = mapped_column(String, nullable=False)
     address: Mapped[str] = mapped_column(String, nullable=False)
 
     warehouse_products = relationship("Warehouses_products", back_populates="warehouse", cascade="all, delete-orphan")
+    roles = relationship("Roles", back_populates="warehouse", cascade="all, delete-orphan")
 
 
 class Warehouses_products(Base):
@@ -57,6 +60,7 @@ class Products(Base):
 
     supplier = relationship("Suppliers", back_populates="products")
     category = relationship("Categories", back_populates="products")
+    role_classes = relationship("Role_classes", back_populates="products",  cascade="all, delete-orphan")
     warehouse_products = relationship("Warehouses_products", back_populates="product", cascade="all, delete-orphan")
     product_attributes = relationship("Product_attributes", back_populates="product", cascade="all, delete-orphan")
 
@@ -67,10 +71,11 @@ class Categories(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     class_name: Mapped[str] = mapped_column(String, nullable=False)
-    product_type: Mapped[str] = mapped_column(String, nullable=False)
+    class_type: Mapped[str] = mapped_column(String, nullable=False)
 
     products = relationship("Products", back_populates="category", cascade="all, delete-orphan")
     attributes = relationship("Attributes", back_populates="category", cascade="all, delete-orphan")
+    role_classes = relationship("Role_classes", back_populates="category",  cascade="all, delete-orphan")
 
 
 class Attributes(Base):
@@ -151,3 +156,37 @@ class Tariffs(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     limit_users: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class Roles(Base):
+
+    __tablename__ = 'role'
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    gender: Mapped[str] = mapped_column(String, nullable=True)
+
+    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    warehouse_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('warehouse.id', ondelete='CASCADE'), nullable=False)
+
+    customer = relationship("Customers", back_populates="roles")
+    warehouse = relationship("Warehouses", back_populates="roles")
+    role_classes = relationship("Role_classes", back_populates="roles",  cascade="all, delete-orphan")
+
+
+class Role_classes(Base):
+
+    __tablename__ = 'role_class'
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    lifespan: Mapped[float] = mapped_column(Float, nullable=False)
+
+    role_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role.id', ondelete='CASCADE'), nullable=False)
+    category_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
+    product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=True)
+
+    role = relationship("Roles", back_populates="role_classes")
+    category = relationship("Warehouses", back_populates="role_classes")
+    products = relationship("Products", back_populates="role_classes")

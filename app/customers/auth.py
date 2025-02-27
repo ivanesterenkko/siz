@@ -33,9 +33,9 @@ def create_access_token_customer(data: dict) -> str:
     return encoded_jwt
 
 
-async def authenticate_customer(login: str, password: str) -> None | Customers:
+async def authenticate_customer(email: str, password: str) -> None | Customers:
 
-    customer = await CustomersDAO.find_one_or_none(login=login)
+    customer = await CustomersDAO.find_one_or_none(email=email)
 
     if not customer or not verify_password(password, customer.hashed_password):
         return None

@@ -42,7 +42,7 @@ async def login_user(
       ) -> TokenResponse:
 
     supplier = await authenticate_supplier(
-        login=user_data.login,
+        login=user_data.email,
         password=user_data.password
         )
 
