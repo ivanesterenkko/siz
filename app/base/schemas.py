@@ -54,7 +54,7 @@ class ProductRequest(BaseModel):
     produce_time: float
     lifespan: float
     is_by_order: bool
-    category_id: UUID4
+    class_id: UUID4
     attributes: list[Product_attributeRequest]
 
 

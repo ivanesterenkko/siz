@@ -377,7 +377,7 @@ async def patch_role_class(
     )
 
 
-@router.get("/warehouses/{warehouse_id}/roles/{role_id}")
+@router.get("/warehouses/{warehouse_id}/roles//{role_class_id}")
 async def get_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
