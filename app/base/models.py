@@ -172,7 +172,7 @@ class Roles(Base):
 
     customer = relationship("Customers", back_populates="roles")
     warehouse = relationship("Warehouses", back_populates="roles")
-    role_classes = relationship("Role_classes", back_populates="roles",  cascade="all, delete-orphan")
+    role_classes = relationship("Role_classes", back_populates="role",  cascade="all, delete-orphan")
 
 
 class Role_classes(Base):
@@ -188,5 +188,5 @@ class Role_classes(Base):
     product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=True)
 
     role = relationship("Roles", back_populates="role_classes")
-    category = relationship("Warehouses", back_populates="role_classes")
+    category = relationship("Categories", back_populates="role_classes")
     products = relationship("Products", back_populates="role_classes")

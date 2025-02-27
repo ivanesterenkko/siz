@@ -262,6 +262,7 @@ async def patch_warehouse(
     if not result:
         raise ProductNotFound
     result = await WarehousesDAO.update_(
+        model_id=warehouse_id,
         name=warehouse.name,
         phone=warehouse.phone,
         representative_name=warehouse.representativeName,
@@ -278,26 +279,6 @@ async def delete_warehouse(
       warehouse_id: UUID4,
       supplier: Suppliers = Depends(get_current_supplier)) -> None:
     await WarehousesDAO.delete_(model_id=warehouse_id)
-
-
-@router.patch("/warehouses/{warehouse_id}", description="Обновление склада")
-async def patch_warehouse(
-      warehouse_id: UUID4,
-      warehouse: WarehouseRequest,
-      supplier: Suppliers = Depends(get_current_supplier)
-      ) -> WarehouseResponse:
-    warehouse = await WarehousesDAO.find_by_id(warehouse_id)
-    if not warehouse:
-        raise ProductNotFound
-    result = await WarehousesDAO.update_(
-        name=warehouse.name,
-        phone=warehouse.phone,
-        representative_name=warehouse.representativeName,
-        address=warehouse.address,
-        )
-    return WarehouseResponse(id=result.id,
-                             name=result.name,
-                             address=result.address)
 
 
 @router.post("/warehouses/{warehouse_id}/add_role")
