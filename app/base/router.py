@@ -355,8 +355,8 @@ async def add_role_class(
     return {"role_class_id": result.id}
 
 
-@router.patch("/warehouses/{warehouse_id}/{role_id}/{role_class_id}")
-async def patch_role_class(
+@router.put("/warehouses/{warehouse_id}/{role_id}/{role_class_id}")
+async def put_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
       role_class_id: UUID4,
@@ -409,7 +409,6 @@ async def add_product_to_role_class(
       role_id: UUID4,
       role_class_id: UUID4,
       product_id: UUID4,
-      role_class: RolesRequest,
       customer: Suppliers = Depends(get_current_customer)
       ) -> RolesResponse:
     result = await Role_classesDAO.update_(
