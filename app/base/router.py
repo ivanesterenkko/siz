@@ -578,20 +578,17 @@ async def delete_warehouse_product(
     await Warehouse_productsDAO.delete_(model_id=warehouse_product_id)
 
 
-@router.post("/add_category", description="Добавление категории", tags=["Внутренние"])
+@router.post("/add_category", description="Добавление категории", tags=["Внутренняя"])
 async def add_category(
       category: CategoryRequest,
       customer: Suppliers = Depends(get_current_customer)
-      ) -> CategoryResponse:
+      ) -> None:
     result = await CategoriesDAO.add(
         name=category.name,
         class_name=category.class_name,
         class_type=category.class_type
         )
-    return CategoryResponse(id=result.id,
-                            name=result.name,
-                            class_name=result.class_name,
-                            class_type=result.class_type)
+    return None
 
 
 @router.get("/catalog_types", tags=["Products"])
@@ -620,7 +617,6 @@ async def get_categories_type(
       class_type: str,
       customer: Suppliers = Depends(get_current_customer)
       ) -> list[CategoryResponse]:
-    class_dict = Dict[str, int] = {}
     classes = await CategoriesDAO.find_all(class_type=class_type)
     response_data = []
     for class_e in classes:
