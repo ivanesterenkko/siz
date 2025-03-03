@@ -13,10 +13,13 @@ class Warehouses(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     phone: Mapped[str] = mapped_column(String, nullable=False)
     representative_name: Mapped[str] = mapped_column(String, nullable=False)
-    address: Mapped[str] = mapped_column(String, nullable=False)
+    datetime_created: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    address_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('address.id'), nullable=False)
 
     warehouse_products = relationship("Warehouses_products", back_populates="warehouse", cascade="all, delete-orphan")
     roles = relationship("Roles", back_populates="warehouse", cascade="all, delete-orphan")
+    address = relationship("Addresses", back_populates="warehouse")
 
 
 class Warehouses_products(Base):
@@ -76,6 +79,21 @@ class Categories(Base):
     products = relationship("Products", back_populates="category", cascade="all, delete-orphan")
     attributes = relationship("Attributes", back_populates="category", cascade="all, delete-orphan")
     role_classes = relationship("Role_classes", back_populates="category",  cascade="all, delete-orphan")
+
+
+class Addresses(Base):
+    __tablename__ = 'address'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    region: Mapped[str] = mapped_column(String, nullable=False)
+    city: Mapped[str] = mapped_column(String, nullable=False)
+    street: Mapped[str] = mapped_column(String, nullable=False)
+    house: Mapped[str] = mapped_column(String, nullable=False)
+    building: Mapped[str] = mapped_column(String, nullable=False)
+    structure: Mapped[str] = mapped_column(String, nullable=False)
+    flat: Mapped[str] = mapped_column(String, nullable=False)
+
+    warehouse = relationship("Warehouses", back_populates="address")
 
 
 class Attributes(Base):

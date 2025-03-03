@@ -59,10 +59,14 @@ class ProductRequest(BaseModel):
 
 
 class CategoryResponse(BaseModel):
-    id: UUID4
+    count_products: int
     name: str
-    class_name: str
-    class_type: str
+    id: UUID4
+
+
+class ClassTypesResponse(BaseModel):
+    count_classes: int
+    type: str
 
 
 class ProductResponse(BaseModel):
@@ -87,11 +91,31 @@ class ProductResponse(BaseModel):
     attributes: list[Product_attributeResponse]
 
 
+class AddressesRequest(BaseModel):
+    region: str
+    city: str
+    street: str
+    house: str
+    building: str
+    structure: str
+    flat: str
+
+
 class WarehouseRequest(BaseModel):
     name: str
     phone: str
     representativeName: str
-    address: str
+    address: AddressesRequest
+
+
+class WarehousePatchRequest(WarehouseRequest):
+    address_id: UUID4
+
+
+class AddWarehouseResponse(BaseModel):
+    warehouse_id: UUID4
+    datetime_created: datetime
+    address_id: UUID4
 
 
 class WarehouseResponse(BaseModel):
@@ -99,7 +123,8 @@ class WarehouseResponse(BaseModel):
     name: str
     phone: str
     representativeName: str
-    address: str
+    address_id: UUID4
+    address: AddressesRequest
 
 
 class Warehouse_productResponse(BaseModel):

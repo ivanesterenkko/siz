@@ -12,7 +12,7 @@ from app.customers.models import Customers
 from app.customers.schemas import CustomerRegister, SUserAuth, TokenResponse
 
 
-router = APIRouter(prefix="/auth", tags=["Auth & Customers"])
+router = APIRouter(prefix="/auth", tags=["Auth & Пользователи"])
 
 
 @router.post("/register")
