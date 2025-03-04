@@ -130,7 +130,7 @@ class Product_attributes(Base):
     product_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=True)
     attribute_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute.id', ondelete='CASCADE'), nullable=False)
     attribute_value_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute_value.id', ondelete='CASCADE'), nullable=False)
-    role_class_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role_class_id.id', ondelete='CASCADE'), nullable=True)
+    role_class_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role_class.id', ondelete='CASCADE'), nullable=True)
 
     product = relationship("Products", back_populates="product_attributes")
     attribute = relationship("Attributes", back_populates="product_attributes")
