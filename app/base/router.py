@@ -2,7 +2,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
 from app.base.dao import AddressesDAO, AttributesDAO, CartsDAO, CategoriesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (AddWarehouseResponse, AddressesRequest, AttributesRequest, AttributesResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductRequest, ProductResponse, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
+from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, AttributesRequest, AttributesResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
                               TariffRequest, TariffResponse, Warehouse_productResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
 from app.customers.dependencies import get_current_customer
 from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
@@ -385,7 +385,7 @@ async def delete_role(
     await RolesDAO.delete_(model_id=role_id)
 
 
-@router.post("/warehouses/{warehouse_id}/{role_id}/add_role_class")
+@router.post("/warehouses/{warehouse_id}/{role_id}/add_role_class", tags=["Roles"])
 async def add_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
@@ -398,7 +398,22 @@ async def add_role_class(
         lifespan=role_class.lifespan,
         category_id=role_class.class_id
         )
-    return {"role_class_id": result.id}
+    product_attributes = []
+    for atr in role_class.product_attrubutes:
+        res_atr = await Product_attributesDAO.add(
+            attribute_id=atr.attribute_id,
+            attribute_value_id=atr.attribute_value_id,
+            role_class_id=result.id
+        )
+        product_attributes.append(
+            ProductAttributesResponse(
+                id=res_atr.id
+            )
+        )
+    return Role_classesResponse(
+        id=result.id,
+        product_attrubutes=product_attributes
+    )
 
 
 @router.put("/warehouses/{warehouse_id}/{role_id}/{role_class_id}")
@@ -423,7 +438,7 @@ async def put_role_class(
     )
 
 
-@router.get("/warehouses/{warehouse_id}/roles//{role_class_id}")
+@router.get("/warehouses/{warehouse_id}/roles/{role_class_id}")
 async def get_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
@@ -440,7 +455,7 @@ async def get_role_class(
     )
 
 
-@router.delete("/warehouses/{warehouse_id}/{role_id}/{role_class_id}")
+@router.delete("/warehouses/{warehouse_id}/{role_id}/{role_class_id}", tags=["Roles"])
 async def delete_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
@@ -454,14 +469,14 @@ async def add_product_to_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
       role_class_id: UUID4,
-      product_id: UUID4,
+      product: AddProductRequest,
       customer: Suppliers = Depends(get_current_customer)
-      ) -> RolesResponse:
+      ) -> AddProductRequest:
     result = await Role_classesDAO.update_(
         model_id=role_class_id,
-        product_id=product_id
+        product_id=product.product_id
         )
-    return {"product_id": result.product_id}
+    return AddProductRequest(product_id=result.product_id)
 
 
 @router.post("/warehouses/{warehouse_id}/{role_id}/add_employee")
@@ -516,7 +531,7 @@ async def delete_employee(
         )
 
 
-@router.post("/add_warehouse_product")
+@router.post("/add_warehouse_product", tags=["Внутренняя"])
 async def add_warehouse_product(
       warehouse_id: UUID4,
       product_id: UUID4,
@@ -538,7 +553,7 @@ async def add_warehouse_product(
                                      update_date=result.update_date)
 
 
-@router.get("/products_on_warehouse")
+@router.get("/products_on_warehouse", tags=["Внутренняя"])
 async def get_warehouse_products(
       warehouse_id: UUID4,
       supplier: Suppliers = Depends(get_current_supplier)
@@ -557,7 +572,7 @@ async def get_warehouse_products(
     return response_data
 
 
-@router.get("/product_on_warehouses")
+@router.get("/product_on_warehouses", tags=["Внутренняя"])
 async def get_warehouses_product(
       product_id: UUID4,
       customer: Suppliers = Depends(get_current_customer)
@@ -571,7 +586,7 @@ async def get_warehouses_product(
                                   update_date=result.update_date) for result in results]
 
 
-@router.delete("/warehouse_products/{warehouse_product_id}")
+@router.delete("/warehouse_products/{warehouse_product_id}", tags=["Внутренняя"])
 async def delete_warehouse_product(
       warehouse_product_id: UUID4,
       supplier: Suppliers = Depends(get_current_supplier)) -> None:
@@ -583,7 +598,7 @@ async def add_category(
       category: CategoryRequest,
       customer: Suppliers = Depends(get_current_customer)
       ) -> None:
-    result = await CategoriesDAO.add(
+    await CategoriesDAO.add(
         name=category.name,
         class_name=category.class_name,
         class_type=category.class_type
@@ -631,14 +646,14 @@ async def get_categories_type(
     return response_data
 
 
-# @router.delete("/classes/{class_id}")
-# async def delete_category(
-#       class_id: UUID4,
-#       supplier: Suppliers = Depends(get_current_supplier)) -> None:
-#     await CategoriesDAO.delete_(model_id=class_id)
+@router.delete("/classes/{class_id}", tags=["Внутренняя"])
+async def delete_category(
+      class_id: UUID4,
+      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+    await CategoriesDAO.delete_(model_id=class_id)
 
 
-@router.post("/classes/{class_id}/add_attribute", description="Добавление хакактеристики")
+@router.post("/classes/{class_id}/add_attribute", description="Добавление хакактеристики", tags=["Внутренняя"])
 async def add_attribute(
       attribute: AttributesRequest,
       class_id: UUID4,
@@ -681,7 +696,7 @@ async def get_attribute(
                               value_type=result.value_type)
 
 
-@router.delete("/classes/{class_id}/attributes/{attribute_id}")
+@router.delete("/classes/{class_id}/attributes/{attribute_id}", tags=["Внутренняя"])
 async def delete_attribute(
       attribute_id: UUID4,
       supplier: Suppliers = Depends(get_current_supplier)) -> None:

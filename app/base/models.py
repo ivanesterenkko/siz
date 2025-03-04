@@ -101,12 +101,24 @@ class Attributes(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    value_name: Mapped[str] = mapped_column(String, nullable=False)
-    value_type: Mapped[str] = mapped_column(String, nullable=False)
+    is_protection: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     category_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
 
     category = relationship("Categories", back_populates="attributes")
+    product_attributes = relationship("Product_attributes", back_populates="attribute", cascade="all, delete-orphan")
+    atribute_values = relationship("Attribute_values", back_populates="attribute", cascade="all, delete-orphan")
+
+
+class Attribute_values(Base):
+    __tablename__ = 'attribute_value'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    attribute_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute.id', ondelete='CASCADE'), nullable=False)
+
+    attribute = relationship("Attributes", back_populates="atribute_values")
     product_attributes = relationship("Product_attributes", back_populates="attribute", cascade="all, delete-orphan")
 
 
@@ -114,13 +126,16 @@ class Product_attributes(Base):
     __tablename__ = 'product_attribute'
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
-    value: Mapped[str] = mapped_column(String, nullable=False)
 
-    product_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=False)
+    product_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=True)
     attribute_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute.id', ondelete='CASCADE'), nullable=False)
+    attribute_value_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute_value.id', ondelete='CASCADE'), nullable=False)
+    role_class_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role_class_id.id', ondelete='CASCADE'), nullable=True)
 
     product = relationship("Products", back_populates="product_attributes")
     attribute = relationship("Attributes", back_populates="product_attributes")
+    atribute_values = relationship("Attribute_values", back_populates="product_attributes")
+    role_class = relationship("Role_classes", back_populates="product_attributes")
 
 
 class Carts(Base):
@@ -208,3 +223,4 @@ class Role_classes(Base):
     role = relationship("Roles", back_populates="role_classes")
     category = relationship("Categories", back_populates="role_classes")
     products = relationship("Products", back_populates="role_classes")
+    product_attributes = relationship("Product_attributes", back_populates="role_class")

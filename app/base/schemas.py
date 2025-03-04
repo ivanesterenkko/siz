@@ -13,17 +13,29 @@ class RolesResponse(BaseModel):
     description: str
 
 
+class ProductAttributesRequest(BaseModel):
+    attribute_id: UUID4
+    attribute_value_id: UUID4
+
+
 class Role_classesRequest(BaseModel):
     class_id: UUID4
-    name: str
+    category: str
     lifespan: int
+    product_attrubutes: list[ProductAttributesRequest]
+
+
+class ProductAttributesResponse(BaseModel):
+    id: UUID4
+
+
+class AddProductRequest(BaseModel):
+    product_id: UUID4
 
 
 class Role_classesResponse(BaseModel):
     id: UUID4
-    class_id: UUID4
-    name: str
-    lifespan: int
+    product_attrubutes: list[ProductAttributesResponse]
 
 
 class Product_attributeRequest(BaseModel):
