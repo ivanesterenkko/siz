@@ -45,6 +45,7 @@ class Products(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
     price: Mapped[int] = mapped_column(Integer, nullable=False)
+    product_category: Mapped[str] = mapped_column(String, nullable=True)
     weight: Mapped[float] = mapped_column(Float, nullable=False)
     length: Mapped[float] = mapped_column(Float, nullable=False)
     width: Mapped[float] = mapped_column(Float, nullable=False)
@@ -73,8 +74,7 @@ class Categories(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    class_name: Mapped[str] = mapped_column(String, nullable=False)
-    class_type: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)
 
     products = relationship("Products", back_populates="category", cascade="all, delete-orphan")
     attributes = relationship("Attributes", back_populates="category", cascade="all, delete-orphan")
@@ -119,7 +119,7 @@ class Attribute_values(Base):
     attribute_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('attribute.id', ondelete='CASCADE'), nullable=False)
 
     attribute = relationship("Attributes", back_populates="atribute_values")
-    product_attributes = relationship("Product_attributes", back_populates="attribute", cascade="all, delete-orphan")
+    product_attributes = relationship("Product_attributes", back_populates="atribute_values", cascade="all, delete-orphan")
 
 
 class Product_attributes(Base):

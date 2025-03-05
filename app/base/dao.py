@@ -1,4 +1,4 @@
-from app.base.models import Addresses, Attributes, Carts, Categories, Order_products, Orders, Product_attributes, Products, Role_classes, Roles, Tariffs, Warehouses, Warehouses_products
+from app.base.models import Addresses, Attribute_values, Attributes, Carts, Categories, Order_products, Orders, Product_attributes, Products, Role_classes, Roles, Tariffs, Warehouses, Warehouses_products
 from app.dao.base import BaseDAO
 
 
@@ -25,6 +25,11 @@ class CategoriesDAO(BaseDAO):
 class AttributesDAO(BaseDAO):
 
     model = Attributes
+
+
+class Attributes_valueDAO(BaseDAO):
+
+    model = Attribute_values
 
 
 class Product_attributesDAO(BaseDAO):

@@ -1,8 +1,8 @@
 from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
-from app.base.dao import AddressesDAO, AttributesDAO, CartsDAO, CategoriesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, AttributesRequest, AttributesResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
+from app.base.dao import AddressesDAO, Attributes_valueDAO, AttributesDAO, CartsDAO, CategoriesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
+from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesRequest, AttributesRequest, AttributesResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
                               TariffRequest, TariffResponse, Warehouse_productResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
 from app.customers.dependencies import get_current_customer
 from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
@@ -16,8 +16,8 @@ router = APIRouter()
 async def add_product(
       product: ProductRequest,
       supplier: Suppliers = Depends(get_current_supplier)
-      ) -> ProductResponse:
-    result = await ProductsDAO.add(
+      ) -> None:
+    await ProductsDAO.add(
         name=product.name,
         description=product.description,
         width=product.width,
@@ -34,50 +34,10 @@ async def add_product(
         lifespan=product.lifespan,
         produce_time=product.produce_time,
         is_by_order=product.is_by_order,
-        category_id=product.class_id
+        category_id=product.class_id,
+        product_category=product.category
         )
-    product_attributes = []
-    category = await CategoriesDAO.find_by_id(product.class_id)
-    if product.attributes:
-        for attribute in product.attributes:
-            attribute_or = await AttributesDAO.find_by_id(attribute.attribute_id)
-            product_attribute = await Product_attributesDAO.add(
-                attribute_id=attribute.attribute_id,
-                value=attribute.value,
-                product_id=result.id
-            )
-            product_attributes.append(
-                Product_attributeResponse(
-                    id=product_attribute.id,
-                    attribute_id=product_attribute.attribute_id,
-                    name=attribute_or.name,
-                    value=product_attribute.value
-                )
-            )
-    return ProductResponse(id=result.id,
-                           name=result.name,
-                           description=result.description,
-                           width=result.width,
-                           length=result.length,
-                           weight=result.weight,
-                           height=result.height,
-                           price=result.price,
-                           supplier_id=result.supplier_id,
-                           color=result.color,
-                           country=result.country,
-                           brand=result.brand,
-                           gost=result.gost,
-                           article=result.article,
-                           lifespan=result.lifespan,
-                           produce_time=result.produce_time,
-                           is_by_order=result.is_by_order,
-                           classes=CategoryResponse(
-                               id=category.id,
-                               class_name=category.class_name,
-                               class_type=category.class_type
-                           ),
-                           attributes=product_attributes)
-
+    return None
 
 # @router.get("/products", description="Получение товаров продавца")
 # async def get_products_supplier(
@@ -124,13 +84,20 @@ async def add_product(
 #     return result_response
 
 
-@router.get("/catalog/{class_id}", description="Получение списка товаров в категории", tags=["Внутренняя"])
+@router.get("/catalog/{class_type}/{class_id}", description="Получение списка товаров в категории", tags=["Products"])
 async def get_products(
+      class_type: str,
       class_id: UUID4,
       customer: Suppliers = Depends(get_current_customer)
       ) -> list[ProductResponse]:
     result_response = []
     results = await ProductsDAO.find_all(class_id=class_id)
+    classes = await CategoriesDAO.find_by_id(class_id)
+    classes_response = ClassesResponse(
+        id=classes.id,
+        name=classes.name,
+        type=classes.type
+    )
     if not results:
         raise ProductNotFound
     for result in results:
@@ -138,34 +105,41 @@ async def get_products(
         attributes = await Product_attributesDAO.find_all(product_id=result.id)
         for attribute in attributes:
             attribute_or = await AttributesDAO.find_by_id(attribute.attribute_id)
+            value = await Attributes_valueDAO.find_by_id(attribute.attribute_value_id)
             product_attributes.append(
                 Product_attributeResponse(
                     id=attribute.id,
                     attribute_id=attribute.attribute_id,
                     name=attribute_or.name,
-                    value=attribute.value
+                    value_id=value.id,
+                    value=value.name
                 )
             )
         result_response.append(
-            ProductResponse(id=result.id,
-                            name=result.name,
-                            description=result.description,
-                            width=result.width,
-                            length=result.length,
-                            weight=result.weight,
-                            height=result.height,
-                            price=result.price,
-                            supplier_id=result.supplier_id,
-                            color=result.color,
-                            country=result.country,
-                            brand=result.brand,
-                            gost=result.gost,
-                            article=result.article,
-                            lifespan=result.lifespan,
-                            produce_time=result.produce_time,
-                            is_by_order=result.is_by_order,
-                            class_id=result.category_id,
-                            attributes=product_attributes)
+            ProductResponse(
+                id=result.id,
+                name=result.name,
+                description=result.description,
+                price=result.price,
+                classes=classes_response,
+                category=result.product_category,
+                product_attrubutes=product_attributes,
+                color=result.color,
+                article=result.article,
+                brand=result.brand,
+                gost=result.gost,
+                is_by_order=result.is_by_order,
+                produce_time=result.produce_time,
+                country=result.country,
+                lifespan=result.lifespan,
+                width=result.width,
+                weight=result.weight,
+                length=result.length,
+                height=result.height,
+                items_available=None,
+                pictures=None,
+                certificates=None
+            )
         )
     return result_response
 
@@ -394,7 +368,7 @@ async def add_role_class(
       ):
     result = await Role_classesDAO.add(
         role_id=role_id,
-        name=role_class.name,
+        name=role_class.category,
         lifespan=role_class.lifespan,
         category_id=role_class.class_id
         )
@@ -593,16 +567,16 @@ async def delete_warehouse_product(
     await Warehouse_productsDAO.delete_(model_id=warehouse_product_id)
 
 
-@router.post("/add_category", description="Добавление категории", tags=["Внутренняя"])
-async def add_category(
-      category: CategoryRequest,
+@router.post("/add_categories", description="Добавление категории", tags=["Внутренняя"])
+async def add_categories(
+      categories: list[CategoryRequest],
       customer: Suppliers = Depends(get_current_customer)
       ) -> None:
-    await CategoriesDAO.add(
-        name=category.name,
-        class_name=category.class_name,
-        class_type=category.class_type
-        )
+    for category in categories:
+        await CategoriesDAO.add(
+            name=category.name,
+            type=category.type
+            )
     return None
 
 
@@ -614,9 +588,9 @@ async def get_categories(
     classes = await CategoriesDAO.find_all()
     response_data = []
     for class_e in classes:
-        if class_e not in class_dict:
-            class_dict[class_e] = 0
-        class_dict[class_e] += 1
+        if str(class_e.type) not in class_dict:
+            class_dict[str(class_e.type)] = 0
+        class_dict[str(class_e.type)] += 1
     for key, value in class_dict.items():
         response_data.append(
             ClassTypesResponse(
@@ -632,13 +606,13 @@ async def get_categories_type(
       class_type: str,
       customer: Suppliers = Depends(get_current_customer)
       ) -> list[CategoryResponse]:
-    classes = await CategoriesDAO.find_all(class_type=class_type)
+    classes = await CategoriesDAO.find_all(type=class_type)
     response_data = []
     for class_e in classes:
         products = await ProductsDAO.find_all(category_id=class_e.id)
         response_data.append(
             CategoryResponse(
-                name=class_e.class_name,
+                name=class_e.name,
                 id=class_e.id,
                 count_products=len(products)
             )
@@ -653,28 +627,37 @@ async def delete_category(
     await CategoriesDAO.delete_(model_id=class_id)
 
 
-@router.post("/classes/{class_id}/add_attribute", description="Добавление хакактеристики", tags=["Внутренняя"])
-async def add_attribute(
-      attribute: AttributesRequest,
-      class_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)
-      ) -> AttributesResponse:
-    result = await AttributesDAO.add(
-        name=attribute.name,
-        value_name=attribute.value_name,
-        value_type=attribute.value_type,
-        category_id=class_id
-        )
-    return AttributesResponse(id=result.id,
-                              name=result.name,
-                              value_name=result.value_name,
-                              value_type=result.value_type)
+@router.post("/add_attributies", description="Добавление хакактеристики", tags=["Внутренняя"])
+async def add_attributies(
+      attributies: list[AttributesRequest],
+      customer: Suppliers = Depends(get_current_customer)
+      ) -> None:
+    for attribute in attributies:
+        await AttributesDAO.add(
+            name=attribute.name,
+            is_protection=attribute.is_protection,
+            category_id=attribute.class_id
+            )
+    return None
+
+
+@router.post("/add_attribute_values", description="Добавление хакактеристики", tags=["Внутренняя"])
+async def add_attribute_values(
+      attribute_values: list[Attribute_valuiesRequest],
+      customer: Suppliers = Depends(get_current_customer)
+      ) -> None:
+    for attribute in attribute_values:
+        await Attributes_valueDAO.add(
+            name=attribute.name,
+            attribute_id=attribute.attribute_id
+            )
+    return None
 
 
 @router.get("/classes/{class_id}/attributes")
 async def get_attributes_for_category(
       class_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)
+      customer: Suppliers = Depends(get_current_customer)
       ) -> list[AttributesResponse]:
     results = await AttributesDAO.find_all(category_id=class_id)
     response_data = [AttributesResponse(id=result.id,
