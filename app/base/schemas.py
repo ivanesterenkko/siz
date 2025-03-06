@@ -195,11 +195,16 @@ class Attribute_valuiesRequest(BaseModel):
     name: str
 
 
+class Attribute_valuiesResponse(BaseModel):
+    id: UUID4
+    name: str
+
 class AttributesResponse(BaseModel):
     id: UUID4
     name: str
-    value_name: str
-    value_type: str
+    is_protection: bool
+    attribute_values: Attribute_valuiesResponse
+
 
 
 class CartsResponse(BaseModel):

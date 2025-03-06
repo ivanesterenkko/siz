@@ -2,7 +2,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
 from app.base.dao import AddressesDAO, Attributes_valueDAO, AttributesDAO, CartsDAO, CategoriesDAO, EmployeesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesRequest, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeRequest, EmployeeResponse, NewEmployeeResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
+from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesRequest, Attribute_valuiesResponse, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeRequest, EmployeeResponse, NewEmployeeResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
                               TariffRequest, TariffResponse, Warehouse_productResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
 from app.customers.dependencies import get_current_customer
 from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
@@ -700,6 +700,34 @@ async def get_categories_type(
             )
         )
     return response_data
+
+
+@router.get("/{class_id}/attributes_values", description="Характеристики для класса товара", tags=["Внутренняя"])
+async def get_attributies(
+      class_id: UUID4,
+      customer: Suppliers = Depends(get_current_customer)
+      ) -> list[AttributesResponse]:
+    attributies = await AttributesDAO.find_all(category_id=class_id)
+    attribute_response = []
+    for attribute in attributies:
+        attribute_values = await Attributes_valueDAO.find_all(attribute_id=attribute.id)
+        atr_value_response = []
+        for atr_value in attribute_values:
+            atr_value_response.append(
+                Attribute_valuiesResponse(
+                    id=atr_value.id,
+                    name=atr_value.name
+                )
+            )
+        attribute_response.append(
+            AttributesResponse(
+                id=attribute.id,
+                name=attribute.name,
+                is_protection=attribute.is_protection,
+                attribute_values=atr_value_response
+            )
+        )
+    return attribute_response
 
 
 @router.delete("/classes/{class_id}", tags=["Внутренняя"])
