@@ -25,6 +25,19 @@ class Role_classesRequest(BaseModel):
     product_attrubutes: list[ProductAttributesRequest]
 
 
+class ProductAttributesPutRequest(BaseModel):
+    id: UUID4
+    attribute_id: UUID4
+    attribute_value_id: UUID4
+
+
+class Role_classesPutRequest(BaseModel):
+    class_id: UUID4
+    category: str
+    lifespan: int
+    product_attrubutes: list[ProductAttributesPutRequest]
+
+
 class ProductAttributesResponse(BaseModel):
     id: UUID4
 
@@ -88,6 +101,14 @@ class ClassesResponse(BaseModel):
     name: str
 
 
+class QuantityRequest(BaseModel):
+    quantity: int
+
+
+class CartResponse(BaseModel):
+    product_cart_id: UUID4
+
+
 class ProductResponse(BaseModel):
     id: UUID4
     supplier_id: UUID4
@@ -95,7 +116,6 @@ class ProductResponse(BaseModel):
     name: str
     description: str
     category: str
-    product_attrubutes: list[Product_attributeResponse]
     weight: float
     width: float
     length: float
@@ -216,3 +236,32 @@ class TariffResponse(BaseModel):
     name: str
     limit_users: int
     price: int
+
+
+class EmployeeRequest(BaseModel):
+    name: str
+    gender: str
+    is_archive: bool
+    size_clothes: str
+    size_shoes: str
+    height: str
+    length: str
+    size_head: str
+
+
+class EmployeeResponse(BaseModel):
+    id: UUID4
+    name: str
+    gender: str
+    role: RolesResponse
+    is_archive: bool
+    size_clothes: str
+    size_shoes: str
+    height: str
+    length: str
+    size_head: str
+
+
+class NewEmployeeResponse(BaseModel):
+    id: UUID4,
+    created_at: datetime
