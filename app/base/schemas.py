@@ -268,5 +268,14 @@ class EmployeeResponse(BaseModel):
 
 
 class NewEmployeeResponse(BaseModel):
-    id: UUID4,
+    id: UUID4
     created_at: datetime
+
+
+class ProductCategoryResponse(BaseModel):
+    category: str
+
+
+class RoleClassesCatResponse(BaseModel):
+    id: UUID4
+    classes: ClassesResponse

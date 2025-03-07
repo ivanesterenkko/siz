@@ -2,7 +2,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
 from app.base.dao import AddressesDAO, Attributes_valueDAO, AttributesDAO, CartsDAO, CategoriesDAO, EmployeesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesRequest, Attribute_valuiesResponse, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeRequest, EmployeeResponse, NewEmployeeResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RolesRequest, RolesResponse,
+from app.base.schemas import (AddProductRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesRequest, Attribute_valuiesResponse, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeRequest, EmployeeResponse, NewEmployeeResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, ProductAttributesResponse, ProductCategoryResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RoleClassesCatResponse, RolesRequest, RolesResponse,
                               TariffRequest, TariffResponse, Warehouse_productResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
 from app.customers.dependencies import get_current_customer
 from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
@@ -702,7 +702,7 @@ async def get_categories_type(
     return response_data
 
 
-@router.get("/{class_id}/attributes_values", description="Характеристики для класса товара", tags=["Внутренняя"])
+@router.get("/{class_id}/attributes_values", description="Характеристики для класса товара", tags=["Attributies by category"])
 async def get_attributies(
       class_id: UUID4,
       customer: Suppliers = Depends(get_current_customer)
@@ -728,6 +728,43 @@ async def get_attributies(
             )
         )
     return attribute_response
+
+
+@router.get("/{class_id}/product_categories", description="Категории для класса товара", tags=["Categories by category"])
+async def get_categories_by_class(
+      class_id: UUID4,
+      customer: Suppliers = Depends(get_current_customer)
+      ) -> list[ProductCategoryResponse]:
+    products = await AttributesDAO.find_all(category_id=class_id)
+    categories_response = []
+    for product in products:
+        if product.product_category is None:
+            continue
+        categories_response.append(str(product.product_category))
+    categories_response = list(set(categories_response))
+    return categories_response
+
+
+@router.get("/{role_id}/role_classes", description="Категории снаряженич для должности", tags=["Role classes by role"])
+async def get_classes_by_role(
+      role_id: UUID4,
+      customer: Suppliers = Depends(get_current_customer)
+      ) -> list[RoleClassesCatResponse]:
+    role_classes = await AttributesDAO.find_all(role_id=role_id)
+    response = []
+    for role_class in role_classes:
+        category = await CategoriesDAO.find_by_id(role_class.category_id)
+        response.append(
+            RoleClassesCatResponse(
+                id=role_class.id,
+                classes=ClassesResponse(
+                    id=category.id,
+                    type=category.type,
+                    name=category.name
+                )
+            )
+        )
+    return response
 
 
 @router.delete("/classes/{class_id}", tags=["Внутренняя"])
