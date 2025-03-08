@@ -29,12 +29,13 @@ class Warehouses_products(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     update_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-    product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=False)
+    product_item_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product_item.id', ondelete='CASCADE'), nullable=False)
     warehouse_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('warehouse.id', ondelete='CASCADE'), nullable=False)
 
-    product = relationship("Products", back_populates="warehouse_products")
+    product_item = relationship("Product_items", back_populates="warehouse_products")
     warehouse = relationship("Warehouses", back_populates="warehouse_products")
-    order_products = relationship("Order_products", back_populates="warehouse_product", cascade="all, delete-orphan")
+    issuances = relationship("Issuances", back_populates="warehouse_product")
+    # order_products = relationship("Order_products", back_populates="warehouse_product", cascade="all, delete-orphan")
 
 
 class Products(Base):
@@ -64,9 +65,24 @@ class Products(Base):
     supplier = relationship("Suppliers", back_populates="products")
     category = relationship("Categories", back_populates="products")
     carts = relationship("Carts", back_populates="product", cascade="all, delete-orphan")
+    product_items = relationship("Product_items", back_populates="product", cascade="all, delete-orphan")
     role_classes = relationship("Role_classes", back_populates="products",  cascade="all, delete-orphan")
     warehouse_products = relationship("Warehouses_products", back_populates="product", cascade="all, delete-orphan")
     product_attributes = relationship("Product_attributes", back_populates="product", cascade="all, delete-orphan")
+
+
+class Product_items(Base):
+    __tablename__ = 'product_item'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    size: Mapped[str] = mapped_column(String, nullable=False)
+    man_size: Mapped[str] = mapped_column(String, nullable=False)
+    woman_size: Mapped[str] = mapped_column(String, nullable=False)
+
+    product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id'), nullable=False)
+
+    warehouse_products = relationship("Warehouses_products", back_populates="product_item", cascade="all, delete-orphan")
+    product = relationship("Products", back_populates="product_items")
 
 
 class Categories(Base):
@@ -149,7 +165,7 @@ class Carts(Base):
     product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=False)
 
     customer = relationship("Customers", back_populates="carts")
-    product = relationship("products", back_populates="carts")
+    product = relationship("Products", back_populates="carts")
 
 
 class Orders(Base):
@@ -179,7 +195,7 @@ class Order_products(Base):
     warehouse_product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('warehouse_product.id', ondelete='CASCADE'), nullable=False)
 
     order = relationship("Orders", back_populates="order_products")
-    warehouse_product = relationship("Warehouses_products", back_populates="order_products")
+    # warehouse_product = relationship("Warehouses_products", back_populates="order_products")
 
 
 class Tariffs(Base):
@@ -205,6 +221,7 @@ class Roles(Base):
 
     customer = relationship("Customers", back_populates="roles")
     warehouse = relationship("Warehouses", back_populates="roles")
+    employees = relationship("Employees", back_populates="role")
     role_classes = relationship("Role_classes", back_populates="role",  cascade="all, delete-orphan")
 
 
@@ -224,6 +241,7 @@ class Role_classes(Base):
     category = relationship("Categories", back_populates="role_classes")
     products = relationship("Products", back_populates="role_classes")
     product_attributes = relationship("Product_attributes", back_populates="role_class")
+    issuance = relationship("Issuances", back_populates="role_class")
 
 
 class Employees(Base):
@@ -244,3 +262,23 @@ class Employees(Base):
     role_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role.id', ondelete='CASCADE'), nullable=False)
 
     role = relationship("Roles", back_populates="employees")
+    issuances = relationship("Issuances", back_populates="employee")
+
+
+class Issuances(Base):
+
+    __tablename__ = 'issuance'
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)
+    comment: Mapped[str] = mapped_column(String, nullable=True)
+    date_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    employee_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('employee.id', ondelete='CASCADE'), nullable=False)
+    warehouse_product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('warehouse_product.id', ondelete='CASCADE'), nullable=False)
+    role_class_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('role_class.id', ondelete='CASCADE'), nullable=True)
+
+    role_class = relationship("Role_classes", back_populates="issuance")
+    warehouse_product = relationship("Warehouses_products", back_populates="issuances")
+    employee = relationship("Employees", back_populates="issuances")

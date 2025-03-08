@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import UUID4, BaseModel
 
 
@@ -16,6 +17,15 @@ class RolesResponse(BaseModel):
 class ProductAttributesRequest(BaseModel):
     attribute_id: UUID4
     attribute_value_id: UUID4
+
+
+class Product_itemResponse(BaseModel):
+    id: UUID4
+    size: str
+    man_size: str
+    woman_size: str
+    warehouse_item_id: UUID4
+    quantity: int
 
 
 class Role_classesRequest(BaseModel):
@@ -129,10 +139,10 @@ class ProductResponse(BaseModel):
     produce_time: float
     lifespan: float
     is_by_order: bool
-    items_available: None
+    items_available: Optional[list[Product_itemResponse]] = None
     pictures: None
     certificates: None
-    attributes: list[Product_attributeResponse]
+    attributes: Optional[list[Product_attributeResponse]] = None
 
 
 class AddressesRequest(BaseModel):
@@ -184,7 +194,20 @@ class CategoryRequest(BaseModel):
     type: str
 
 
+class CategoryIDRequest(BaseModel):
+    id: UUID4
+    name: str
+    type: str
+
+
 class AttributesRequest(BaseModel):
+    class_id: UUID4
+    name: str
+    is_protection: bool
+
+
+class AttributesIDRequest(BaseModel):
+    id: UUID4
     class_id: UUID4
     name: str
     is_protection: bool
@@ -195,16 +218,33 @@ class Attribute_valuiesRequest(BaseModel):
     name: str
 
 
+class Attribute_valuiesIDRequest(BaseModel):
+    id: UUID4
+    attribute_id: UUID4
+    name: str
+
+
+class Product_itemRequest(BaseModel):
+    size: str
+    man_size: str
+    woman_size: str
+
+
+class AddWarehouse_itemRequest(BaseModel):
+    product_item_id: UUID4
+    quantity: int
+
+
 class Attribute_valuiesResponse(BaseModel):
     id: UUID4
     name: str
+
 
 class AttributesResponse(BaseModel):
     id: UUID4
     name: str
     is_protection: bool
     attribute_values: Attribute_valuiesResponse
-
 
 
 class CartsResponse(BaseModel):
@@ -241,6 +281,15 @@ class TariffResponse(BaseModel):
     name: str
     limit_users: int
     price: int
+
+
+class IssuanceRequest(BaseModel):
+    type: str
+    employee_id: UUID4
+    comment: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class EmployeeRequest(BaseModel):
