@@ -3,33 +3,34 @@ from user_agents import parse
 
 from app.exceptions import (IncorrectEmailOrPasswordException,
                             UserAlreadyExistsException)
-from app.customers.auth import (authenticate_customer,
-                                create_access_token_customer,
-                                get_password_hash_customer)
-from app.customers.dao import CustomersDAO, SessionsDAO
-from app.customers.dependencies import get_current_customer
-from app.customers.models import Customers
-from app.customers.schemas import CustomerRegister, SUserAuth, TokenResponse
+from app.customers.auth import (authenticate_user, create_access_token,
+                                get_password_hash)
+from app.customers.dao import SessionsDAO, UsersDAO
+from app.customers.dependencies import get_current_user
+from app.customers.models import Users
+from app.customers.schemas import SUserAuth, TokenResponse, UserRegister
 
 
 router = APIRouter(prefix="/auth", tags=["Auth & Пользователи"])
 
 
 @router.post("/register")
-async def register(user_data: CustomerRegister) -> None:
-    existing_user = await CustomersDAO.find_one_or_none(INN=user_data.INN)
+async def register(user_data: UserRegister) -> None:
+    existing_user = await UsersDAO.find_one_or_none(INN=user_data.INN)
     if existing_user:
         raise UserAlreadyExistsException
 
-    hashed_password = get_password_hash_customer(user_data.password)
+    hashed_password = get_password_hash(user_data.password)
 
-    await CustomersDAO.add(
+    await UsersDAO.add(
         fio=user_data.fio,
         email=user_data.email,
         hashed_password=hashed_password,
         address=user_data.address,
         phone=user_data.phone,
-        INN=user_data.INN
+        INN=user_data.INN,
+        is_customer=user_data.is_customer,
+        is_supplier=user_data.is_supplier
     )
 
 
@@ -40,12 +41,12 @@ async def login_user(
       response: Response
       ) -> TokenResponse:
 
-    customer = await authenticate_customer(
+    user = await authenticate_user(
         email=user_data.email,
         password=user_data.password
         )
 
-    if not customer:
+    if not user:
 
         raise IncorrectEmailOrPasswordException
     user_agent_str = request.headers.get("user-agent", "")
@@ -57,14 +58,14 @@ async def login_user(
     else:
         device_type = "desktop"
 
-    existing_session = await SessionsDAO.find_one_or_none(customer_id=customer.id, device=device_type)
+    existing_session = await SessionsDAO.find_one_or_none(user_id=user.id, device=device_type)
     if existing_session:
         await SessionsDAO.delete_(model_id=existing_session.id)
 
-    access_token = create_access_token_customer(
-        {"sub": str(customer.id)}
+    access_token = create_access_token(
+        {"sub": str(user.id)}
     )
-    await SessionsDAO.add(customer_id=customer.id, jwt_token=access_token, device=device_type)
+    await SessionsDAO.add(user_id=user.id, jwt_token=access_token, device=device_type)
 
     response.set_cookie("access_token", access_token, httponly=True)
     return TokenResponse(access_token=access_token)
@@ -74,7 +75,7 @@ async def login_user(
 async def logout_user(
       request: Request,
       response: Response,
-      customer: Customers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
 
     user_agent_str = request.headers.get("user-agent", "")
@@ -86,7 +87,7 @@ async def logout_user(
     else:
         device_type = "desktop"
 
-    existing_session = await SessionsDAO.find_one_or_none(customer_id=customer.id, device=device_type)
+    existing_session = await SessionsDAO.find_one_or_none(user_id=user.id, device=device_type)
     if existing_session:
         await SessionsDAO.delete_(model_id=existing_session.id)
 

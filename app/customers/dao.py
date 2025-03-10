@@ -1,10 +1,10 @@
 from app.dao.base import BaseDAO
-from app.customers.models import Customers, Sessions
+from app.customers.models import Sessions, Users
 
 
-class CustomersDAO(BaseDAO):
+class UsersDAO(BaseDAO):
 
-    model = Customers
+    model = Users
 
 
 class SessionsDAO(BaseDAO):

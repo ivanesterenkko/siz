@@ -1,12 +1,12 @@
-from app.dao.base import BaseDAO
-from app.suppliers.models import Sessions_sup, Suppliers
+# from app.dao.base import BaseDAO
+# from app.suppliers.models import Sessions_sup, Suppliers
 
 
-class SuppliersDAO(BaseDAO):
+# class SuppliersDAO(BaseDAO):
 
-    model = Suppliers
+#     model = Suppliers
 
 
-class Sessions_supDAO(BaseDAO):
+# class Sessions_supDAO(BaseDAO):
 
-    model = Sessions_sup
+#     model = Sessions_sup

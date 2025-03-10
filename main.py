@@ -10,7 +10,6 @@ from redis import asyncio as aioredis
 
 from app.db import delete_tables, create_tables
 from app.customers.router import router as customer_router
-from app.suppliers.router import router as supplier_router
 from app.base.router import router as base_router
 
 from app.config import settings
@@ -34,7 +33,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(customer_router)
-app.include_router(supplier_router)
 app.include_router(base_router)
 
 origins = [

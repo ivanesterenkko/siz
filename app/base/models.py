@@ -59,15 +59,13 @@ class Products(Base):
     produce_time: Mapped[float] = mapped_column(Float, nullable=False)
     lifespan: Mapped[float] = mapped_column(Float, nullable=False)
 
-    supplier_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('supplier.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     category_id:  Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
 
-    supplier = relationship("Suppliers", back_populates="products")
-    category = relationship("Categories", back_populates="products")
+    user = relationship("Users", back_populates="products")
     carts = relationship("Carts", back_populates="product", cascade="all, delete-orphan")
     product_items = relationship("Product_items", back_populates="product", cascade="all, delete-orphan")
     role_classes = relationship("Role_classes", back_populates="products",  cascade="all, delete-orphan")
-    warehouse_products = relationship("Warehouses_products", back_populates="product", cascade="all, delete-orphan")
     product_attributes = relationship("Product_attributes", back_populates="product", cascade="all, delete-orphan")
 
 
@@ -92,7 +90,6 @@ class Categories(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
 
-    products = relationship("Products", back_populates="category", cascade="all, delete-orphan")
     attributes = relationship("Attributes", back_populates="category", cascade="all, delete-orphan")
     role_classes = relationship("Role_classes", back_populates="category",  cascade="all, delete-orphan")
 
@@ -161,10 +158,10 @@ class Carts(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     product_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('product.id', ondelete='CASCADE'), nullable=False)
 
-    customer = relationship("Customers", back_populates="carts")
+    user = relationship("Users", back_populates="carts")
     product = relationship("Products", back_populates="carts")
 
 
@@ -178,9 +175,9 @@ class Orders(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
 
-    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
 
-    customer = relationship("Customers", back_populates="orders")
+    user = relationship("Users", back_populates="orders")
     order_products = relationship("Order_products", back_populates="order", cascade="all, delete-orphan")
 
 
@@ -216,10 +213,10 @@ class Roles(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     gender: Mapped[str] = mapped_column(String, nullable=True)
 
-    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     warehouse_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('warehouse.id', ondelete='CASCADE'), nullable=False)
 
-    customer = relationship("Customers", back_populates="roles")
+    user = relationship("Users", back_populates="roles")
     warehouse = relationship("Warehouses", back_populates="roles")
     employees = relationship("Employees", back_populates="role")
     role_classes = relationship("Role_classes", back_populates="role",  cascade="all, delete-orphan")

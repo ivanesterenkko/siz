@@ -2,13 +2,15 @@ from datetime import datetime
 from pydantic import UUID4, BaseModel
 
 
-class CustomerRegister(BaseModel):
+class UserRegister(BaseModel):
     fio: str
     email: str
     password: str
     phone: str
     INN: str
     address: str
+    is_customer: bool
+    is_supplier: bool
 
 
 class UserResponse(BaseModel):

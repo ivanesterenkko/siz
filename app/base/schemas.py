@@ -121,7 +121,7 @@ class CartResponse(BaseModel):
 
 class ProductResponse(BaseModel):
     id: UUID4
-    supplier_id: UUID4
+    user_id: UUID4
     classes: ClassesResponse
     name: str
     description: str
@@ -249,7 +249,7 @@ class AttributesResponse(BaseModel):
 
 class CartsResponse(BaseModel):
     id: UUID4
-    customer_id: UUID4
+    user_id: UUID4
     warehouse_product_id: UUID4
     quantity: int
 
@@ -283,13 +283,62 @@ class TariffResponse(BaseModel):
     price: int
 
 
+class Warehouse_itemsIssuanceRequest(BaseModel):
+    role_class_id: UUID4
+    warehouse_product_id: UUID4
+    quantity: int
+
+
 class IssuanceRequest(BaseModel):
     type: str
     employee_id: UUID4
     comment: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
+    warehouse_items: list[Warehouse_itemsIssuanceRequest]
+
+
+class Product_itemEmpResponse(BaseModel):
+    id: UUID4
+    size: str
+    man_size: str
+    woman_size: str
+
+
+class ProductEmpResponse(BaseModel):
+    id: UUID4
+    role_class_id: UUID4
+    name: str
+    price: int
+    item: Product_itemEmpResponse
+
+
+class IssuanceEmplResponse(BaseModel):
+    role_class_id: UUID4
+    classes: ClassesResponse
+    product: ProductEmpResponse
+
+
+class WarehouseGetResponse(Product_itemEmpResponse):
+    quantity: int
+
+
+class WarehouseGetProductResponse(BaseModel):
+    id: UUID4
+    role_class_id: UUID4
+    name: str
+    price: int
+    items: list[WarehouseGetResponse]
+
+
+class WarehouseGetProductComResponse(BaseModel):
+    role_class_id: UUID4
+    classes: ClassesResponse
+    product: WarehouseGetProductResponse
+
+
+
+class IssuanceResponse(BaseModel):
+    id: UUID4
+    date_at: datetime
 
 
 class EmployeeRequest(BaseModel):
@@ -314,6 +363,20 @@ class EmployeeResponse(BaseModel):
     height: str
     length: str
     size_head: str
+
+
+class EmployeeComResponse(BaseModel):
+    status: str
+    date_at: datetime
+    info: EmployeeResponse
+    complectation: list[IssuanceEmplResponse]
+
+
+class WarehouseComResponse(BaseModel):
+    name: str
+    price_role: int
+    info: list[EmployeeResponse]
+    complectation: list[WarehouseGetProductComResponse]
 
 
 class NewEmployeeResponse(BaseModel):

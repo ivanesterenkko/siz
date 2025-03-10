@@ -7,9 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 
-class Customers(Base):
+class Users(Base):
 
-    __tablename__ = 'customer'
+    __tablename__ = 'user'
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     fio: Mapped[str] = mapped_column(nullable=False)
@@ -18,11 +18,14 @@ class Customers(Base):
     phone: Mapped[str] = mapped_column(nullable=False)
     INN: Mapped[str] = mapped_column(nullable=False)
     address: Mapped[str] = mapped_column(nullable=False)
+    is_customer: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    is_supplier: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    session = relationship("Sessions", back_populates="customer", cascade="all, delete-orphan")
-    carts = relationship("Carts", back_populates="customer", cascade="all, delete-orphan")
-    orders = relationship("Orders", back_populates="customer", cascade="all, delete-orphan")
-    roles = relationship("Roles", back_populates="customer", cascade="all, delete-orphan")
+    session = relationship("Sessions", back_populates="user", cascade="all, delete-orphan")
+    carts = relationship("Carts", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Orders", back_populates="user", cascade="all, delete-orphan")
+    roles = relationship("Roles", back_populates="user", cascade="all, delete-orphan")
+    products = relationship("Products", back_populates="user", cascade="all, delete-orphan")
 
     def __str__(self):
 
@@ -37,6 +40,6 @@ class Sessions(Base):
     device: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
 
-    customer = relationship("Customers", back_populates="session")
+    user = relationship("Users", back_populates="session")

@@ -1,13 +1,12 @@
 from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import UUID4
-from app.base.dao import AddressesDAO, Attributes_valueDAO, AttributesDAO, CartsDAO, CategoriesDAO, EmployeesDAO, Order_productsDAO, OrdersDAO, Product_attributesDAO, Product_itemsDAO, ProductsDAO, Role_classesDAO, RolesDAO, TariffsDAO, Warehouse_productsDAO, WarehousesDAO
-from app.base.schemas import (AddProductRequest, AddWarehouse_itemRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesIDRequest, Attribute_valuiesRequest, Attribute_valuiesResponse, AttributesIDRequest, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryIDRequest, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeRequest, EmployeeResponse, NewEmployeeResponse, Order_productsResponse, OrdersResponse, Product_attributeResponse, Product_itemRequest, Product_itemResponse, ProductAttributesResponse, ProductCategoryResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RoleClassesCatResponse, RolesRequest, RolesResponse,
-                              TariffRequest, TariffResponse, Warehouse_productResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
-from app.customers.dependencies import get_current_customer
-from app.exceptions import ProductNotFound, ProductOutOfStock, TariffNotFound
-from app.suppliers.dependencies import get_current_supplier
-from app.suppliers.models import Suppliers
+from app.base.dao import AddressesDAO, Attributes_valueDAO, AttributesDAO, CartsDAO, CategoriesDAO, EmployeesDAO, IssuancesDAO, Product_attributesDAO, Product_itemsDAO, ProductsDAO, Role_classesDAO, RolesDAO, Warehouse_productsDAO, WarehousesDAO
+from app.base.schemas import (AddProductRequest, AddWarehouse_itemRequest, AddWarehouseResponse, AddressesRequest, Attribute_valuiesIDRequest, Attribute_valuiesRequest, Attribute_valuiesResponse, AttributesIDRequest, AttributesRequest, AttributesResponse, CartResponse, CartsResponse, CategoryIDRequest, CategoryRequest, CategoryResponse, ClassTypesResponse, ClassesResponse, EmployeeComResponse, EmployeeRequest, EmployeeResponse, IssuanceEmplResponse, IssuanceRequest, IssuanceResponse, NewEmployeeResponse, Product_attributeResponse, Product_itemEmpResponse, Product_itemRequest, Product_itemResponse, ProductAttributesResponse, ProductCategoryResponse, ProductEmpResponse, ProductRequest, ProductResponse, QuantityRequest, Role_classesPutRequest, Role_classesRequest, Role_classesResponse, RoleClassesCatResponse, RolesRequest, RolesResponse,
+                              Warehouse_productResponse, WarehouseComResponse, WarehouseGetProductComResponse, WarehouseGetProductResponse, WarehouseGetResponse, WarehousePatchRequest, WarehouseRequest, WarehouseResponse)
+from app.customers.dependencies import get_current_user
+from app.customers.models import Users
+from app.exceptions import ProductNotFound
 
 router = APIRouter()
 
@@ -15,7 +14,7 @@ router = APIRouter()
 @router.post("/products", description="Добавление товара", tags=["Внутренняя"])
 async def add_product(
       product: ProductRequest,
-      supplier: Suppliers = Depends(get_current_supplier)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await ProductsDAO.add(
         name=product.name,
@@ -25,7 +24,7 @@ async def add_product(
         weight=product.weight,
         height=product.height,
         price=product.price,
-        supplier_id=supplier.id,
+        user_id=user.id,
         color=product.color,
         country=product.country,
         brand=product.brand,
@@ -44,7 +43,7 @@ async def add_product(
 async def get_products(
       class_type: str,
       class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[ProductResponse]:
     result_response = []
     results = await ProductsDAO.find_all(category_id=class_id)
@@ -74,7 +73,7 @@ async def get_products(
         result_response.append(
             ProductResponse(
                 id=result.id,
-                supplier_id=result.supplier_id,
+                user_id=result.user_id,
                 name=result.name,
                 description=result.description,
                 price=result.price,
@@ -106,7 +105,7 @@ async def get_product(
       class_type: str,
       class_id: UUID4,
       product_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> ProductResponse:
     result = await ProductsDAO.find_by_id(product_id)
     classes = await CategoriesDAO.find_by_id(class_id)
@@ -133,7 +132,7 @@ async def get_product(
         )
     return ProductResponse(
         id=result.id,
-        supplier_id=result.supplier_id,
+        user_id=result.user_id,
         name=result.name,
         description=result.description,
         price=result.price,
@@ -163,7 +162,7 @@ async def delete_product(
       class_type: str,
       class_id: UUID4,
       product_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await ProductsDAO.delete_(model_id=product_id)
 
 
@@ -173,11 +172,11 @@ async def add_product_to_cart(
       class_id: UUID4,
       product_id: UUID4,
       quantity: QuantityRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> CartResponse:
     result = await CartsDAO.add(
         quantity=quantity,
-        customer_id=customer.id,
+        user_id=user.id,
         product_id=product_id
         )
     return CartResponse(product_cart_id=result.id)
@@ -186,7 +185,7 @@ async def add_product_to_cart(
 @router.post("/warehouses", description="Добавление склада", tags=["Warehouse"])
 async def add_warehouse(
       warehouse: WarehouseRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> AddWarehouseResponse:
     address = await AddressesDAO.add(
         region=warehouse.address.region,
@@ -212,7 +211,7 @@ async def add_warehouse(
 
 @router.get("/warehouses", description="Получение складов", tags=["Warehouse"])
 async def get_warehouses(
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[WarehouseResponse]:
     results = await WarehousesDAO.find_all()
     if not results:
@@ -244,7 +243,7 @@ async def get_warehouses(
 @router.get("/warehouses/{warehouse_id}", description="Получение склада", tags=["Warehouse"])
 async def get_warehouse(
       warehouse_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> WarehouseResponse:
     result = await WarehousesDAO.find_by_id(warehouse_id)
     if not result:
@@ -272,7 +271,7 @@ async def get_warehouse(
 async def patch_warehouse(
       warehouse_id: UUID4,
       warehouse: WarehousePatchRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> WarehouseResponse:
     result = await WarehousesDAO.find_by_id(warehouse_id)
     if not result:
@@ -313,7 +312,7 @@ async def patch_warehouse(
 @router.delete("/warehouses/{warehouse_id}", description="Удаление склада", tags=["Warehouse"])
 async def delete_warehouse(
       warehouse_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await WarehousesDAO.delete_(model_id=warehouse_id)
 
 
@@ -321,10 +320,10 @@ async def delete_warehouse(
 async def add_role(
       warehouse_id: UUID4,
       role: RolesRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ):
     result = await RolesDAO.add(
-        customer_id=customer.id,
+        user_id=user.id,
         name=role.name,
         description=role.description,
         warehouse_id=warehouse_id
@@ -332,18 +331,79 @@ async def add_role(
     return {"role_id": result.id}
 
 
-@router.get("/warehouses/{warehouse_id}/{role_id}")
+@router.get("/warehouses/{warehouse_id}/{role_id}", tags=["Roles"])
 async def get_role(
       warehouse_id: UUID4,
       role_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> RolesResponse:
-    result = await RolesDAO.find_by_id(role_id)
-
-    return RolesResponse(
-        id=result.id,
-        name=result.name,
-        description=result.description
+    role = await RolesDAO.find_by_id(role_id)
+    role_classes = await Role_classesDAO.find_all(role_id=role_id)
+    warehouse = await WarehousesDAO.find_by_id(warehouse_id)
+    sum_price = 0
+    emp_info = []
+    employees = await EmployeesDAO.find_all(role_id=role_id)
+    for employee in employees:
+        emp_info.append(
+            EmployeeResponse(
+                id=employee.id,
+                name=employee.name,
+                gender=employee.gender,
+                role=RolesResponse(
+                    id=role.id,
+                    name=role.name,
+                    description=role.description
+                ),
+                is_archive=employee.is_archive,
+                size_clothes=employee.size_clothes,
+                size_shoes=employee.size_shoes,
+                height=employee.height,
+                length=employee.length,
+                size_head=employee.size_head
+            )
+        )
+    complectation = []
+    for role_class in role_classes:
+        if role_class.product_id is None:
+            continue
+        product = await ProductsDAO.find_by_id(role_class.product_id)
+        sum_price += product.price
+        product_items = await Product_itemsDAO.find_all(product_id=product.id)
+        classes = await CategoriesDAO.find_by_id(product.category_id)
+        classes_res = ClassesResponse(
+            id=classes.id,
+            type=classes.type,
+            name=classes.name
+        )
+        items = []
+        for product_item in product_items:
+            warehouse_item = await Warehouse_productsDAO.find_one_or_none(product_item_id=product_item.id)
+            product_item = await Product_itemsDAO.find_by_id(warehouse_item.product_item_id)
+            items.append(WarehouseGetResponse(
+                id=product_item.id,
+                size=product_item.size,
+                man_size=product_item.man_size,
+                woman_size=product_item.woman_size,
+                quantity=warehouse_item.quantity
+            )
+            )
+        product_res = WarehouseGetProductResponse(
+                    id=product.id,
+                    role_class_id=role_class.id,
+                    name=product.name,
+                    price=product.price,
+                    items=items
+                )
+        complectation.append(WarehouseGetProductComResponse(
+            role_class_id=role_class.id,
+            classes=classes_res,
+            product=product_res
+        ))
+    return WarehouseComResponse(
+        name=warehouse.name,
+        price_role=sum_price,
+        info=emp_info,
+        complectation=complectation
     )
 
 
@@ -352,7 +412,7 @@ async def patch_role(
       warehouse_id: UUID4,
       role_id: UUID4,
       role: RolesRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> RolesResponse:
     result = await RolesDAO.update_(
         model_id=role_id,
@@ -370,7 +430,7 @@ async def patch_role(
 async def delete_role(
       warehouse_id: UUID4,
       role_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await RolesDAO.delete_(model_id=role_id)
 
@@ -380,7 +440,7 @@ async def add_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
       role_class: Role_classesRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ):
     result = await Role_classesDAO.add(
         role_id=role_id,
@@ -412,7 +472,7 @@ async def put_role_class(
       role_id: UUID4,
       role_class: Role_classesPutRequest,
       role_class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> Role_classesResponse:
     result = await Role_classesDAO.update_(
         model_id=role_class_id,
@@ -445,7 +505,7 @@ async def get_product_to_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
       role_class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[ProductResponse]:
     role_class = await Role_classesDAO.find_by_id(role_class_id)
     results = await ProductsDAO.find_all(category_id=role_class.category_id)
@@ -531,7 +591,7 @@ async def delete_role_class(
       warehouse_id: UUID4,
       role_id: UUID4,
       role_class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await RolesDAO.delete_(model_id=role_class_id)
 
@@ -541,7 +601,7 @@ async def add_product_to_role_class(
       role_id: UUID4,
       role_class_id: UUID4,
       product: AddProductRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> AddProductRequest:
     result = await Role_classesDAO.update_(
         model_id=role_class_id,
@@ -555,7 +615,7 @@ async def add_employee(
       warehouse_id: UUID4,
       role_id: UUID4,
       employee: EmployeeRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> NewEmployeeResponse:
     result = await EmployeesDAO.add(
         role_id=role_id,
@@ -579,12 +639,67 @@ async def get_employee(
       warehouse_id: UUID4,
       role_id: UUID4,
       employee_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
-      ):
-    result = await Role_classesDAO.add(
-        role_id=role_id
-        )
-    return {"role_class_id": result.id}
+      user: Users = Depends(get_current_user)
+      ) -> EmployeeComResponse:
+    employee = await EmployeesDAO.find_by_id(employee_id)
+    role = await RolesDAO.find_by_id(employee.role_id)
+    issuances = await IssuancesDAO.find_all(employee_id=employee_id)
+    if issuances is None:
+        status = None
+        date_at = None
+        complectation = None
+    else:
+        status = "Укомплектован"
+        date_at = issuances[0].date_at
+        complectation = []
+        for issuance in issuances:
+            warehouse_item = await Warehouse_productsDAO.find_by_id(issuance.warehouse_product_id)
+            product_item = await Product_itemsDAO.find_by_id(warehouse_item.product_item_id)
+            product = await ProductsDAO.find_by_id(product_item.product_id)
+            classes = await CategoriesDAO.find_by_id(product.category_id)
+            classes_res = ClassesResponse(
+                id=classes.id,
+                type=classes.type,
+                name=classes.name
+            )
+            product_res = ProductEmpResponse(
+                id=product.id,
+                name=product.name,
+                price=product.price,
+                item=Product_itemEmpResponse(
+                    id=product_item.id,
+                    size=product_item.size,
+                    man_size=product_item.man_size,
+                    woman_size=product_item.woman_size
+                )
+            )
+            complectation.append(IssuanceEmplResponse(
+                role_class_id=issuance.role_class_id,
+                classes=classes_res,
+                product=product_res
+            ))
+    employee_info = EmployeeResponse(
+        id=employee.id,
+        name=employee.name,
+        gender=employee.gender,
+        role=RolesResponse(
+            id=role.id,
+            name=role.name,
+            description=role.description
+        ),
+        is_archive=employee.is_archive,
+        size_clothes=employee.size_clothes,
+        size_shoes=employee.size_shoes,
+        height=employee.height,
+        length=employee.length,
+        size_head=employee.size_head
+    )
+    return EmployeeComResponse(
+        status=status,
+        date_at=date_at,
+        info=employee_info,
+        complectation=complectation
+    )
 
 
 @router.patch("/warehouses/{warehouse_id}/roles/{role_id}/{employee_id}", tags=["Roles"])
@@ -593,7 +708,7 @@ async def patch_employee(
       role_id: UUID4,
       employee_id: UUID4,
       employee: EmployeeRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> EmployeeResponse:
     result = await EmployeesDAO.update_(
         model_id=employee_id,
@@ -631,7 +746,7 @@ async def delete_employee(
       warehouse_id: UUID4,
       role_id: UUID4,
       employee_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await EmployeesDAO.delete_(employee_id)
 
@@ -639,22 +754,33 @@ async def delete_employee(
 @router.post("/warehouses/{warehouse_id}/add_issuances", tags=["Roles"])
 async def add_issuance(
       warehouse_id: UUID4,
-      issuance: AddWarehouse_itemRequest,
-      customer: Suppliers = Depends(get_current_customer)
-      ) -> None:
-    await Warehouse_productsDAO.add(
-        warehouse_id=warehouse_id,
-        product_item_id=product_item.product_item_id,
-        quantity=product_item.quantity
-    )
-    return None
+      issuances: IssuanceRequest,
+      user: Users = Depends(get_current_user)
+      ) -> list[IssuanceResponse]:
+    response = []
+    for issuance in issuances.warehouse_items:
+        result = await IssuancesDAO.add(
+            quantity=issuance.quantity,
+            warehouse_product_id=issuance.warehouse_product_id,
+            role_class_id=issuance.role_class_id,
+            type=issuances.type,
+            employee_id=issuances.employee_id,
+            comment=issuances.comment
+        )
+        response.append(
+            IssuanceResponse(
+                id=result.id,
+                date_at=result.date_at
+            )
+        )
+    return response
 
 
 @router.post("/warehouses/{warehouse_id}/add_warehouse_product", tags=["Warehouse"])
 async def add_warehouse_product(
       warehouse_id: UUID4,
       product_item: AddWarehouse_itemRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await Warehouse_productsDAO.add(
         warehouse_id=warehouse_id,
@@ -669,7 +795,7 @@ async def get_warehouse_products(
       warehouse_id: UUID4,
       warehouse_item_id: UUID4,
       quantity: QuantityRequest,
-      supplier: Suppliers = Depends(get_current_supplier)
+      user: Users = Depends(get_current_user)
       ) -> QuantityRequest:
     result = await Warehouse_productsDAO.update_(
         model_id=warehouse_item_id,
@@ -683,7 +809,7 @@ async def get_warehouse_products(
 @router.get("/product_on_warehouses", tags=["Внутренняя"])
 async def get_warehouses_product(
       product_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[Warehouse_productResponse]:
     results = await Warehouse_productsDAO.find_all(product_id=product_id)
     return [
@@ -697,14 +823,14 @@ async def get_warehouses_product(
 @router.delete("/warehouses/{warehouse_id}/{warehouse_item_id}", tags=["Warehouse"])
 async def delete_warehouse_product(
       warehouse_product_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await Warehouse_productsDAO.delete_(model_id=warehouse_product_id)
 
 
 @router.post("/add_categories", description="Добавление категории", tags=["Внутренняя"])
 async def add_categories(
       categories: list[CategoryRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for category in categories:
         await CategoriesDAO.add(
@@ -717,7 +843,7 @@ async def add_categories(
 @router.post("/add_categories_with_id", description="Добавление категории", tags=["Внутренняя"])
 async def add_categories_id(
       categories: list[CategoryIDRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for category in categories:
         await CategoriesDAO.add(
@@ -730,7 +856,7 @@ async def add_categories_id(
 
 @router.get("/catalog_types", tags=["Products"])
 async def get_categories(
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[ClassTypesResponse]:
     class_dict: Dict[str, int] = {}
     classes = await CategoriesDAO.find_all()
@@ -752,7 +878,7 @@ async def get_categories(
 @router.get("/catalog/{class_type}", tags=["Products"])
 async def get_categories_type(
       class_type: str,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[CategoryResponse]:
     classes = await CategoriesDAO.find_all(type=class_type)
     response_data = []
@@ -771,7 +897,7 @@ async def get_categories_type(
 @router.get("/{class_id}/attributes_values", description="Характеристики для класса товара", tags=["Attributies by category"])
 async def get_attributies(
       class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[AttributesResponse]:
     attributies = await AttributesDAO.find_all(category_id=class_id)
     attribute_response = []
@@ -799,7 +925,7 @@ async def get_attributies(
 @router.get("/{class_id}/product_categories", description="Категории для класса товара", tags=["Categories by category"])
 async def get_categories_by_class(
       class_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[ProductCategoryResponse]:
     products = await AttributesDAO.find_all(category_id=class_id)
     categories_response = []
@@ -814,7 +940,7 @@ async def get_categories_by_class(
 @router.get("/{role_id}/role_classes", description="Категории снаряженич для должности", tags=["Role classes by role"])
 async def get_classes_by_role(
       role_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[RoleClassesCatResponse]:
     role_classes = await AttributesDAO.find_all(role_id=role_id)
     response = []
@@ -836,14 +962,14 @@ async def get_classes_by_role(
 @router.delete("/classes/{class_id}", tags=["Внутренняя"])
 async def delete_category(
       class_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await CategoriesDAO.delete_(model_id=class_id)
 
 
 @router.post("/add_attributies", description="Добавление хакактеристики", tags=["Внутренняя"])
 async def add_attributies(
       attributies: list[AttributesRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for attribute in attributies:
         await AttributesDAO.add(
@@ -857,7 +983,7 @@ async def add_attributies(
 @router.post("/add_attributies_with_id", description="Добавление хакактеристики", tags=["Внутренняя"])
 async def add_attributies_id(
       attributies: list[AttributesIDRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for attribute in attributies:
         await AttributesDAO.add(
@@ -872,7 +998,7 @@ async def add_attributies_id(
 @router.post("/add_attribute_values", description="Добавление хакактеристики", tags=["Внутренняя"])
 async def add_attribute_values(
       attribute_values: list[Attribute_valuiesRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for attribute in attribute_values:
         await Attributes_valueDAO.add(
@@ -885,7 +1011,7 @@ async def add_attribute_values(
 @router.post("/add_attribute_values_with_id", description="Добавление хакактеристики", tags=["Внутренняя"])
 async def add_attribute_values_id(
       attribute_values: list[Attribute_valuiesIDRequest],
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     for attribute in attribute_values:
         await Attributes_valueDAO.add(
@@ -899,7 +1025,7 @@ async def add_attribute_values_id(
 @router.delete("/classes/{class_id}/attributes/{attribute_id}", tags=["Внутренняя"])
 async def delete_attribute(
       attribute_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await AttributesDAO.delete_(model_id=attribute_id)
 
 
@@ -907,7 +1033,7 @@ async def delete_attribute(
 async def add_product_item(
       product_id: UUID4,
       product_item: Product_itemRequest,
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> None:
     await Product_itemsDAO.add(
         product_id=product_id,
@@ -922,7 +1048,7 @@ async def add_product_item(
 async def delete_product_item(
       product_id: UUID4,
       product_item_id: UUID4,
-      supplier: Suppliers = Depends(get_current_supplier)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await Product_itemsDAO.delete_(model_id=product_item_id)
 
 
@@ -930,7 +1056,7 @@ async def delete_product_item(
 # async def add_product_to_cart(
 #       warehouse_product_id: UUID4,
 #       quantity: int,
-#       customer: Suppliers = Depends(get_current_customer)
+#       user: Users = Depends(get_current_user)
 #       ) -> CartsResponse:
 #     product = await Warehouse_productsDAO.find_by_id(warehouse_product_id)
 #     if not product:
@@ -950,26 +1076,26 @@ async def delete_product_item(
 
 @router.get("/cart", tags=["Cartффф"])
 async def get_cart(
-      customer: Suppliers = Depends(get_current_customer)
+      user: Users = Depends(get_current_user)
       ) -> list[CartsResponse]:
-    results = await CartsDAO.find_all(customer_id=customer.id)
+    results = await CartsDAO.find_all(user_id=user.id)
     return [
         CartsResponse(id=result.id,
                       warehouse_product_id=result.warehouse_product_id,
-                      customer_id=result.customer_id,
+                      user_id=result.user_id,
                       quantity=result.quantity) for result in results]
 
 
 @router.delete("/carts/{cart_id}")
 async def delete_cart(
       cart_id: UUID4,
-      customer: Suppliers = Depends(get_current_customer)) -> None:
+      user: Users = Depends(get_current_user)) -> None:
     await CartsDAO.delete_(model_id=cart_id)
 
 
 # @router.post("/add_order")
 # async def add_order(
-#       customer: Suppliers = Depends(get_current_customer)
+#       user: Users = Depends(get_current_user)
 #       ) -> OrdersResponse:
 #     results = await CartsDAO.find_all(customer_id=customer.id)
 #     if not results:
@@ -1014,7 +1140,7 @@ async def delete_cart(
 
 # @router.get("/orders")
 # async def get_orders(
-#       customer: Suppliers = Depends(get_current_customer)
+#       user: Users = Depends(get_current_user)
 #       ) -> list[OrdersResponse]:
 #     orders = await OrdersDAO.find_all(customer_id=customer.id)
 #     orders_data = []
