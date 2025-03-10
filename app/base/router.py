@@ -558,7 +558,7 @@ async def get_product_to_role_class(
         result_response.append(
             ProductResponse(
                 id=result.id,
-                supplier_id=result.supplier_id,
+                user_id=result.user_id,
                 name=result.name,
                 description=result.description,
                 price=result.price,
