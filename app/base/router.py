@@ -358,7 +358,7 @@ async def get_role(
                 size_clothes=employee.size_clothes,
                 size_shoes=employee.size_shoes,
                 height=employee.height,
-                length=employee.length,
+                chest_length=employee.chest_length,
                 size_head=employee.size_head
             )
         )
@@ -537,7 +537,7 @@ async def get_product_to_role_class(
                     )
                 )
         item_response = []
-        product_items = await Product_itemsDAO.find_all(prodcut_id=result.id)
+        product_items = await Product_itemsDAO.find_all(product_id=result.id)
         if product_items is None:
             item_response = None
         else:
@@ -625,7 +625,7 @@ async def add_employee(
         size_clothes=employee.size_clothes,
         size_shoes=employee.size_shoes,
         height=employee.height,
-        length=employee.length,
+        chest_length=employee.chest_length,
         size_head=employee.size_head
         )
     return NewEmployeeResponse(
@@ -691,7 +691,7 @@ async def get_employee(
         size_clothes=employee.size_clothes,
         size_shoes=employee.size_shoes,
         height=employee.height,
-        length=employee.length,
+        chest_length=employee.chest_length,
         size_head=employee.size_head
     )
     return EmployeeComResponse(
@@ -719,7 +719,7 @@ async def patch_employee(
         size_clothes=employee.size_clothes,
         size_shoes=employee.size_shoes,
         height=employee.height,
-        length=employee.length,
+        chest_length=employee.chest_length,
         size_head=employee.size_head
         )
     role = await RolesDAO.find_by_id(role_id)
@@ -736,7 +736,7 @@ async def patch_employee(
         size_clothes=result.size_clothes,
         size_shoes=result.size_shoes,
         height=result.height,
-        length=result.length,
+        chest_length=result.chest_length,
         size_head=result.size_head
     )
 

@@ -348,7 +348,7 @@ class EmployeeRequest(BaseModel):
     size_clothes: str
     size_shoes: str
     height: str
-    length: str
+    chest_length: str
     size_head: str
 
 
@@ -361,7 +361,7 @@ class EmployeeResponse(BaseModel):
     size_clothes: str
     size_shoes: str
     height: str
-    length: str
+    chest_length: str
     size_head: str
 
 
