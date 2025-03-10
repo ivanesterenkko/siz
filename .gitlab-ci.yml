@@ -3,26 +3,23 @@ stages:
   - test
   - deploy
 
-build-job:
+build:
   stage: build
   script:
-    - echo "Compiling the code..."
-    - echo "Compile complete."
+    - docker build -t siz_image .
+  only:
+    - main
 
-unit-test-job:
+test-job:
   stage: test
   script:
-    - echo "Running unit tests... This will take about 60 seconds."
-    - echo "Code coverage is 90%"
-
-lint-test-job:
-  stage: test
-  script:
-    - echo "No lint issues found."
+    - docker run --rm -d siz_image
+  only:
+    - main
 
 deploy-job:
   stage: deploy
-  environment: production
   script:
-    - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - docker compose up -d
+  only:
+    - main
