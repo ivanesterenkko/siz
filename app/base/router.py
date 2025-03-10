@@ -389,7 +389,6 @@ async def get_role(
             )
         product_res = WarehouseGetProductResponse(
                     id=product.id,
-                    role_class_id=role_class.id,
                     name=product.name,
                     price=product.price,
                     items=items
@@ -482,18 +481,21 @@ async def put_role_class(
         category_id=role_class.class_id
         )
     product_attributes = []
-    for atr in role_class.product_attrubutes:
-        res_atr = await Product_attributesDAO.update_(
-            model_id=atr.id,
-            attribute_id=atr.attribute_id,
-            attribute_value_id=atr.attribute_value_id,
-            role_class_id=result.id
-        )
-        product_attributes.append(
-            ProductAttributesResponse(
-                id=res_atr.id
+    if role_class.product_attrubutes is None:
+        product_attributes = None
+    else:
+        for atr in role_class.product_attrubutes:
+            res_atr = await Product_attributesDAO.update_(
+                model_id=atr.id,
+                attribute_id=atr.attribute_id,
+                attribute_value_id=atr.attribute_value_id,
+                role_class_id=result.id
             )
-        )
+            product_attributes.append(
+                ProductAttributesResponse(
+                    id=res_atr.id
+                )
+            )
     return Role_classesResponse(
         id=result.id,
         product_attrubutes=product_attributes
@@ -634,7 +636,7 @@ async def add_employee(
     )
 
 
-@router.get("/warehouses/{warehouse_id}/roles/{role_id}/{employee_id}")
+@router.get("/warehouses/{warehouse_id}/roles/{role_id}/employees/{employee_id}", tags=["Roles"])
 async def get_employee(
       warehouse_id: UUID4,
       role_id: UUID4,
@@ -702,7 +704,7 @@ async def get_employee(
     )
 
 
-@router.patch("/warehouses/{warehouse_id}/roles/{role_id}/{employee_id}", tags=["Roles"])
+@router.patch("/warehouses/{warehouse_id}/roles/{role_id}/employees/{employee_id}", tags=["Roles"])
 async def patch_employee(
       warehouse_id: UUID4,
       role_id: UUID4,
@@ -741,7 +743,7 @@ async def patch_employee(
     )
 
 
-@router.delete("/warehouses/{warehouse_id}/roles/{role_id}/{employee_id}", tags=["Roles"])
+@router.delete("/warehouses/{warehouse_id}/roles/{role_id}/employees/{employee_id}", tags=["Roles"])
 async def delete_employee(
       warehouse_id: UUID4,
       role_id: UUID4,

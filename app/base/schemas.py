@@ -45,7 +45,7 @@ class Role_classesPutRequest(BaseModel):
     class_id: UUID4
     category: str
     lifespan: int
-    product_attrubutes: list[ProductAttributesPutRequest]
+    product_attrubutes: Optional[list[ProductAttributesPutRequest]] = None
 
 
 class ProductAttributesResponse(BaseModel):
@@ -58,7 +58,7 @@ class AddProductRequest(BaseModel):
 
 class Role_classesResponse(BaseModel):
     id: UUID4
-    product_attrubutes: list[ProductAttributesResponse]
+    product_attrubutes: Optional[list[ProductAttributesResponse]] = None
 
 
 class Product_attributeRequest(BaseModel):
@@ -305,7 +305,6 @@ class Product_itemEmpResponse(BaseModel):
 
 class ProductEmpResponse(BaseModel):
     id: UUID4
-    role_class_id: UUID4
     name: str
     price: int
     item: Product_itemEmpResponse
@@ -323,7 +322,6 @@ class WarehouseGetResponse(Product_itemEmpResponse):
 
 class WarehouseGetProductResponse(BaseModel):
     id: UUID4
-    role_class_id: UUID4
     name: str
     price: int
     items: list[WarehouseGetResponse]
@@ -333,7 +331,6 @@ class WarehouseGetProductComResponse(BaseModel):
     role_class_id: UUID4
     classes: ClassesResponse
     product: WarehouseGetProductResponse
-
 
 
 class IssuanceResponse(BaseModel):
